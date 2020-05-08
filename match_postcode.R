@@ -8,7 +8,7 @@
 #'
 #' @param Index index object created using index_postcodes()
 #'
-#' @param retrieve_columns name of ONS columns to retrieve. Default is "all"; note this excludes 2019 utla and ltla "stp19", "ccg19" geographies which are retrieved from a different database.
+#' @param desired_columns name of ONS columns to retrieve. Default is "all"; note this excludes 2019 utla and ltla "stp19", "ccg19" geographies which are retrieved from a different database.
 #' For UTLA and LTLA "utla", "ltla" can be listed and the 2019 geographies (names and codes) will be retrieved based on the database "laua" from  https://geoportal.statistics.gov.uk/datasets/lower-tier-local-authority-to-upper-tier-local-authority-april-2019-lookup-in-england-and-wales (2019 version).
 #' For the 2020 STP and CCGs  lsoa11, "stp20", "ccg20" can be listed and the 2020 geographies (names and codes) will be retrieved based on the database "lsoa11" from https://geoportal.statistics.gov.uk/datasets/lsoa-2011-to-clinical-commissioning-groups-to-sustainability-and-transformation-partnerships-april-2020-lookup-in-england/data . Herefordshire CCG name is updated as per https://digital.nhs.uk/services/organisation-data-service/change-summary---stp-reconfiguration
 #'
@@ -117,8 +117,8 @@ col_names <- as.character(fread(Index$full_path[1], header = F, nrows = 1, strin
 colnames(dt_geocoded)[((ncol(dt_geocoded)-(NROW(col_names))-1)):(ncol(dt_geocoded)-2)] <- col_names
 
 # Remove undesired column
-setDT(dt)[, c(ONS_columns[!(ONS_columns %in% c(desired_columns, "laua","lsoa11")) &
-                                     ONS_columns %in% names(dt)],
+setDT(dt_geocoded)[, c(ONS_columns[!(ONS_columns %in% c(desired_columns, "laua","lsoa11")) &
+                                     ONS_columns %in% names(dt_geocoded)],
                                     "Pc_s", "Postcode_match") := NULL]
 
 # Add UTLA - LTLA 2020 data if "utla", "ltla in desired_columns
@@ -154,17 +154,19 @@ if(isTRUE(sum(c("stp20", "ccg20") %in% desired_columns) >0)){
   message(paste("Postcodes searched:",sum(!is.na((dt_geocoded[,get(query_column)])))))
 
   new_col <- dt_geocoded[, (ncol(dt)-1):ncol(dt_geocoded)]
-  NA_col <- sum(rowSums(is.na(new_col)) == ncol(new_col))
+  new_col[""] <- NA
+  not_retrieved <- sum(rowSums(is.na(new_col)) == ncol(new_col))
   found_rows <- sum(rowSums(is.na(new_col)) != ncol(new_col))
+  no_postcode <- NROW(dt[is.na(dt[,(query_column)]),])
   message(paste("Rows matched:", found_rows))
-  message(paste("Rows with unknown postcodes:", NA_col -  NROW(dt[is.na(dt[,(query_column)]),]) ))
-  message(paste("Rows with no postcode:",NROW(dt[is.na(dt[,(query_column)]),])))
-  message(paste("Total rows missing geographies:",NA_col))
+  message(paste("Rows with no postcode:", no_postcode))
+  message(paste("Rows with postcode not in NSPL:",not_retrieved - no_postcode))
+  message(paste("Total rows not matched:",not_retrieved))
 
   if(isTRUE(length(Date_columns) >0)){
   cat("Columns changed to character format:", Date_columns, "\n", sep="\n")
   }
-  remove(end_time, start_time)
+  remove(end_time, start_time, new_col, not_retrieved,found_rows,no_postcode)
   gc(verbose = F, full = T)
   return(dt_geocoded)
 }
