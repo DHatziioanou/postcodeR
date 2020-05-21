@@ -12,7 +12,7 @@
 #' For UTLA and LTLA "utla", "ltla" can be listed and the 2019 geographies (names and codes) will be retrieved based on the database "laua" from  https://geoportal.statistics.gov.uk/datasets/lower-tier-local-authority-to-upper-tier-local-authority-april-2019-lookup-in-england-and-wales (2019 version).
 #' For the 2020 STP and CCGs  lsoa11, "stp20", "ccg20" can be listed and the 2020 geographies (names and codes) will be retrieved based on the database "lsoa11" from https://geoportal.statistics.gov.uk/datasets/lsoa-2011-to-clinical-commissioning-groups-to-sustainability-and-transformation-partnerships-april-2020-lookup-in-england/data . Herefordshire CCG name is updated as per https://digital.nhs.uk/services/organisation-data-service/change-summary---stp-reconfiguration
 #'
-#' @return Returns the original dt object with added columns of ONS data
+#' @return Returns the original dt object as a data.frame with added columns of ONS data
 #'
 #'
 #' @author Diane Hatziioanou
@@ -67,7 +67,7 @@ match_postcode <- function(dt, query_column, Index, desired_columns){
   # Change any problematic Date columns to character format
   Date_columns <- (colnames(dt)[grepl("Date", sapply(dt,class))])
   if(isTRUE(length(Date_columns) >0)){
-    dt[,Date_columns] <- apply(setDF(dt)[,Date_columns], 2, function(x) as.character(x))
+    dt[, (Date_columns) := lapply(.SD, as.character), .SDcols = Date_columns]
   }
 
   # Retrieve goegraphies from postcodes
@@ -100,7 +100,7 @@ match_postcode <- function(dt, query_column, Index, desired_columns){
     }
     # IF MERGED DATASET DOESN'T EXIST, CREATE IT
     if (!exists("dt_geocoded")){
-      dt_geocoded <- temp_dt
+      dt_geocoded <- copy(temp_dt)
     }
     if(!exists("Pc_ONS")){
       remove(temp_dt)
@@ -167,7 +167,7 @@ match_postcode <- function(dt, query_column, Index, desired_columns){
   print(end_time - start_time)
   message(paste("Postcodes searched:",sum(!is.na((dt_geocoded[,get(query_column)])))))
 
-  new_col <- dt_geocoded[, (ncol(dt)-1):ncol(dt_geocoded)]
+  new_col <- copy(dt_geocoded[, (ncol(dt)-1):ncol(dt_geocoded)])
   new_col[new_col == ""] <- NA
 
   not_retrieved <- sum(rowSums(is.na(new_col)) == ncol(new_col))
@@ -181,7 +181,7 @@ match_postcode <- function(dt, query_column, Index, desired_columns){
   if(isTRUE(length(Date_columns) >0)){
     cat("Columns changed to character format:", Date_columns, "\n", sep="\n")
   }
-  remove(end_time, start_time, new_col, not_retrieved,found_rows,no_postcode)
+  remove(end_time, start_time, new_col, not_retrieved,found_rows,no_postcode, dt)
   gc(verbose = F, full = T)
-  return(dt_geocoded)
+  return(as.data.frame(dt_geocoded))
 }
