@@ -160,6 +160,7 @@ fwrite(x = Index, file.path(path, paste0(name,".csv")), row.names = F, nThread =
 end_time <- Sys.time()
 message(paste("Run time:",end_time - start_time))
 message(paste("Index saved at:",file.path(path, paste0(name,".csv"))))
+Index <- as.data.frame(Index)
 return(Index)
 
 }
