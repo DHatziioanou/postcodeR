@@ -27,7 +27,7 @@
 #' data_with_ONS <- match_postcode(data, "Postcode", Index, c("laua", "ccg"))
 #'
 #' @export
-match_postcode <- function(dt, query_column, Index, desired_columns){
+match_postcode <- function(data, query_column, Index, desired_columns){
   start_time <- Sys.time()
   options(datatable.fread.dec.experiment = FALSE)
   if (!require("data.table")) {
@@ -42,16 +42,25 @@ match_postcode <- function(dt, query_column, Index, desired_columns){
     install.packages("lubridate")
     library(lubridate)
   }
-  
-  setDF(dt)
+
+  Index <- as.data.frame(Index)
+  # Cater for previous verison of Index
+  if ("Pc_s" %in% names(Index)) {
+  Index <-  dplyr::rename(Index, block = "Pc_s")
+  }
+  dt <- as.data.frame(data)
   col_order <- names(dt)
   # Check dabatase has desired columns
-  ONS_columns <- as.character(fread(Index$full_path[1], header = F, nrows = 1, stringsAsFactors = F, fill = T))
+  db_columns <- as.character(fread(Index$full_path[1], header = F, nrows = 1, stringsAsFactors = F, fill = T))
+
+  if (missing(desired_columns)) {
+    desired_columns <- "all"
+  }
 
   if ("all" %in% desired_columns) {
-    desired_columns <- ONS_columns
+    desired_columns <- db_columns
   } else {
-    problem_columns <- desired_columns[!(desired_columns %in% c(ONS_columns, "utla", "ltla", "stp20", "ccg20", "PHEC19CD", "PHEREG19CD"))]
+    problem_columns <- desired_columns[!(desired_columns %in% c(db_columns, "utla", "ltla", "stp20", "ccg20", "PHEC19CD", "PHEREG19CD"))]
     if (length(problem_columns) != 0) {
       cat(problem_columns)
       stop(paste("The database doesn't have the desired columns above. Try with ones it has!"))
@@ -63,11 +72,11 @@ match_postcode <- function(dt, query_column, Index, desired_columns){
   dt[, Pc := (gsub('([a-zA-Z])([0-9])', '\\1_\\2', dt$Postcode_match))]
   dt[, Pc := (gsub( "_.*$", "",  dt$Pc))]
   dt[, Pc_N := (substr(gsub('\\D+','', dt[,get(query_column)]), 1,1))]
-  dt[, Pc_s := paste0(dt$Pc,dt$Pc_N)]
-  dt[, Pc_s := toupper(dt$Pc_s)]
-  dt[, Pc_s := factor(dt$Pc_s)]
+  dt[, block := paste0(dt$Pc,dt$Pc_N)]
+  dt[, block := toupper(dt$block)]
+  dt[, block := factor(dt$block)]
   dt[, c("Pc","Pc_N") := NULL]
-  data.table::setorder(dt, cols = Pc_s, na.last = T)
+  data.table::setorder(dt, cols = block, na.last = T)
 
   # Change any problematic Date columns to character format
   Date_columns <- (colnames(dt)[grepl("Date", sapply(dt,class))])
@@ -76,19 +85,19 @@ match_postcode <- function(dt, query_column, Index, desired_columns){
   }
 
   # Retrieve goegraphies from postcodes
-  for (i in seq_along(levels(dt$Pc_s))) {
+  for (i in seq_along(levels(dt$block))) {
     # Subset data by postcode
-    temp_dt <- setDF(dt)[dt$Pc_s == levels(dt$Pc_s)[i],]
+    temp_dt <- setDF(dt)[dt$block == levels(dt$block)[i],]
 
     # Give ONS data to postcodes in database
-    if (levels(dt$Pc_s)[i] %in% Index$Pc_s) {
+    if (levels(dt$block)[i] %in% Index$block) {
 
       # Retrieve ONS postcode geographies
-      Pc_ONS <- fread(input = file.path(Index[Index$Pc_s == levels(dt$Pc_s)[i],"full_path"]),
+      Pc_ONS <- fread(input = file.path(Index[Index$block == levels(dt$block)[i],"full_path"]),
                       header = F,
                       sep = "auto",
-                      skip = as.numeric(Index[Index$Pc_s == levels(dt$Pc_s)[i],"start"] - 1),
-                      nrows = as.numeric(Index[Index$Pc_s == levels(dt$Pc_s)[i],"stop"] - Index[Index$Pc_s == levels(dt$Pc_s)[i],"start"] + 1))
+                      skip = as.numeric(Index[Index$block == levels(dt$block)[i],"start"] - 1),
+                      nrows = as.numeric(Index[Index$block == levels(dt$block)[i],"stop"] - Index[Index$block == levels(dt$block)[i],"start"] + 1))
       # Make postcodes matchable
       Pc_ONS[,Postcode_match := toupper(gsub(" ", "", Pc_ONS$V1))]
 
@@ -121,16 +130,16 @@ match_postcode <- function(dt, query_column, Index, desired_columns){
   colnames(dt_geocoded)[((ncol(dt_geocoded) - (NROW(col_names)) - 1)):(ncol(dt_geocoded) - 2)] <- col_names
 
   # Remove undesired column
-  setDT(dt_geocoded)[, c(ONS_columns[!(ONS_columns %in% c(desired_columns, "laua","lsoa11")) &
-                                       ONS_columns %in% names(dt_geocoded)],
-                         "Pc_s", "Postcode_match") := NULL]
+  setDT(dt_geocoded)[, c(db_columns[!(db_columns %in% c(desired_columns, "laua","lsoa11")) &
+                                       db_columns %in% names(dt_geocoded)],
+                         "block", "Postcode_match") := NULL]
 
-# Convert previous Date columns back to Date format  
+# Convert previous Date columns back to Date format
   if (isTRUE(length(Date_columns) > 0)) {
     dt_geocoded[, (Date_columns) := lapply(.SD, function(x)  as.Date(lubridate::parse_date_time(x, orders = c("dmy", "mdy", "ymd")))), .SDcols = Date_columns]
   }
-  
-  
+
+
   # Add UTLA - LTLA 2020 data if "utla", "ltla in desired_columns
   if (isTRUE(sum(c("utla", "ltla") %in% desired_columns) > 0)) {
     UTLA_LTLA <-  fread(file.path("https://opendata.arcgis.com/datasets/3e4f4af826d343349c13fb7f0aa2a307_0.csv"))
@@ -192,8 +201,8 @@ match_postcode <- function(dt, query_column, Index, desired_columns){
     warning("Columns changed to character format and back to Date again: ", list(Date_columns))
   }
 
-  return(as.data.frame(dt_geocoded))
+  setDF(dt_geocoded)
+  return(dt_geocoded)
   rm(list = ls())
   gc(verbose = F, full = T)
 }
-                                           
