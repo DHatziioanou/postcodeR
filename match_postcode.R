@@ -175,7 +175,7 @@ match_postcode <- function(data, query_column, Index, desired_columns){
     } else{
       get_columns <- c("LAD19CD", "PHEREG19CD", "PHEREG19NM")
     }
-    LAD19_to_PHE19 <-  fread(file.path("C:/Users/Diane.Hatziioanou/Documents/postcodeR/LAD19_to_PHE19.csv"))
+    LAD19_to_PHE19 <-  fread(file.path("https://opendata.arcgis.com/datasets/4da177ab2ab34edaba9d2696c3a6da64_0.csv"))
     dt_geocoded <- merge(dt_geocoded, setDF(LAD19_to_PHE19)[, get_columns], by.x = c("laua"), by.y = c("LAD19CD"), all.x = T, all.y = F)
   }
 
