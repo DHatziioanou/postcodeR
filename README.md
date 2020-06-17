@@ -4,7 +4,7 @@ Retrieve ONS NSPL data by postcode
 
 Database indexing
 
-Step 1. Retrieve the NSPL database from https://geoportal.statistics.gov.uk/datasets/national-statistics-postcode-lookup-february-2020 and unzip it.
+Step 1. Retrieve the latest NSPL database from http://geoportal.statistics.gov.uk/search?q=NSPL and unzip it.
 
 Step 2. Create an index:
 
