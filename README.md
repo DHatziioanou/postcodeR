@@ -31,7 +31,9 @@ Summary stats of the mapping will be printed in the Console.
 
 Retrieval of geographies not in ONS NSPL database:
 
-The NSPL database does not have up to date LTLA, ULTA, CCG and STP geographies. The function can retrieve 2019 LTLA and UTLA and 2020 CCG and STP geographies directly from ONS based on the NSPL LAUA and LSOA 2011 geographies respectively. 
+The NSPL database does not have up to date LTLA, ULTA, CCG and STP geographies or any PHE geographies. The function can retrieve 2019 LTLA and UTLA, 2020 CCG and STP geographies and 2019 PHEC and PHER geographies directly from ONS based on the NSPL LAUA and LSOA 2011 geographies. 
 
 To retrieve LTLA or UTLA assign c("laua", "utla", "ltla") to desired_columns.
 To retrieve CCG or STP assign c("lsoa11", "stp20", "ccg20") to desired_columns.
+To retrieve PHEC or PHER assign c("laua", "PHEC19CD", "PHEREG19CD") to desired_columns.
+To retrieve all geographies including 2019 UTLA/LTLA, 2020 CCG/STP and 2019 PHEC/PHER assign c("all", "utla", "ltla", "stp20", "ccg20", "PHEC19CD", "PHEREG19CD") to desired_columns.
