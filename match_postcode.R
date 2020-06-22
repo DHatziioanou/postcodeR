@@ -11,7 +11,8 @@
 #' @param desired_columns name of ONS columns to retrieve. Default is "all"; note this excludes 2019 utla and ltla "stp19", "ccg19" geographies which are retrieved from a different database.
 #' For UTLA and LTLA "utla", "ltla" can be listed and the 2019 geographies (names and codes) will be retrieved based on the database "laua" from  https://geoportal.statistics.gov.uk/datasets/lower-tier-local-authority-to-upper-tier-local-authority-april-2019-lookup-in-england-and-wales (2019 version).
 #' For the 2020 STP and CCGs  lsoa11, "stp20", "ccg20" can be listed and the 2020 geographies (names and codes) will be retrieved based on the database "lsoa11" from https://geoportal.statistics.gov.uk/datasets/lsoa-2011-to-clinical-commissioning-groups-to-sustainability-and-transformation-partnerships-april-2020-lookup-in-england/data . Herefordshire CCG name is updated as per https://digital.nhs.uk/services/organisation-data-service/change-summary---stp-reconfiguration
-#'
+#' For PHEC or PHER assign c("laua", "PHEC19CD", "PHEREG19CD") to desired_columns or c("all", "PHEC19CD", "PHEREG19CD").
+
 #' @return Returns the original dt object as a data.frame with added columns of ONS data
 #'
 #'
@@ -58,7 +59,7 @@ match_postcode <- function(data, query_column, Index, desired_columns){
   }
 
   if ("all" %in% desired_columns) {
-    desired_columns <- db_columns
+    desired_columns <- unique(c(db_columns, desired_columns[desired_columns != "all"]))
   } else {
     problem_columns <- desired_columns[!(desired_columns %in% c(db_columns, "utla", "ltla", "stp20", "ccg20", "PHEC19CD", "PHEREG19CD"))]
     if (length(problem_columns) != 0) {
