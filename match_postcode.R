@@ -170,11 +170,11 @@ match_postcode <- function(data, query_column, Index, desired_columns){
   # PHE Centre data if "PHEC19CD", "PHEREG19CD" in desired_columns
   if (isTRUE(sum(c("PHEC19CD", "PHEREG19CD") %in% desired_columns) > 0)) {
     if (sum(c("PHEC19CD", "PHEREG19CD") %in% desired_columns) == 2) {
-      get_columns <- c("LAD19CD","PHEC19CD","PHEC19NM", "PHEREG19CD", "PHEREG19NM")
+      get_columns <- c("LAD19CD","PHEC19CD", "PHEC19CDH", "PHEC19NM", "PHEREG19CD", "PHEREG19CDH", "PHEREG19NM")
     } else if ("PHEC19CD" %in% desired_columns) {
-      get_columns <- c("LAD19CD","PHEC19CD","PHEC19NM")
+      get_columns <- c("LAD19CD","PHEC19CD", "PHEC19CDH", "PHEC19NM")
     } else{
-      get_columns <- c("LAD19CD", "PHEREG19CD", "PHEREG19NM")
+      get_columns <- c("LAD19CD", "PHEREG19CD", "PHEREG19CDH", "PHEREG19NM")
     }
     LAD19_to_PHE19 <-  fread(file.path("https://opendata.arcgis.com/datasets/4da177ab2ab34edaba9d2696c3a6da64_0.csv"))
     dt_geocoded <- merge(dt_geocoded, setDF(LAD19_to_PHE19)[, get_columns], by.x = c("laua"), by.y = c("LAD19CD"), all.x = T, all.y = F)
