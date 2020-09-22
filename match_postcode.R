@@ -183,8 +183,8 @@ match_postcode <- function(data, query_column, Index, desired_columns){
   setcolorder(setDT(dt_geocoded), c(col_order, names(dt_geocoded)[!(names(dt_geocoded) %in% col_order)]))
 
   end_time <- Sys.time()
-  cat("Run time:")
-  print(end_time - start_time)
+  message("Run time:")
+  message(end_time - start_time)
   message(paste("Postcodes searched:",sum(!is.na((dt_geocoded[,get(query_column)])))))
 
   new_col <- copy(dt_geocoded[, (ncol(dt) - 1 ):ncol(dt_geocoded)])
