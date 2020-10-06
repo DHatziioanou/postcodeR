@@ -41,10 +41,15 @@ ONS_age_groups <- function(populations, age_groups){
   for(i in names(age_groups)){
 
     # Populations inclusing 90+
-    if(age_groups[2,i] == "90+"){
+    if(age_groups[2,i] == "90+" & age_groups[1,i] != "90+"){
 
       populations[[i]] <- rowSums(populations[,c(which(names(populations) %in% c(as.character(as.numeric(age_groups[1,i]):89), "90+")))], na.rm = T)
 
+      # Populations under 90
+    } else if (age_groups[2,i] == "90+" & age_groups[1,i] == "90+"){
+      
+      populations[[i]] <- populations[,c(which(names(populations) ==  "90+"))]
+      
       # Populations under 90
     } else {
 
@@ -70,6 +75,12 @@ ONS_age_groups <- function(populations, age_groups){
   # Return agre group populations
   return(populations)
 }
+
+
+
+
+
+
 
 
 
